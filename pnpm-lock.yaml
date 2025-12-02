@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@0xshariq/voxa':
-        specifier: ^2.2.3
-        version: 2.2.5
+        specifier: ^2.3.0
+        version: 2.3.0
       asciichart:
         specifier: ^1.5.25
         version: 1.5.25
@@ -66,8 +66,8 @@ importers:
 
 packages:
 
-  '@0xshariq/voxa@2.2.5':
-    resolution: {integrity: sha512-SQA5b+Gop3H81+mBWmiloH3/uo30oru+DPwv7rUva6wNgFo07dVt0/EI08EK3+0X+9PqEgzoL+45MeTe7uIFVA==}
+  '@0xshariq/voxa@2.3.0':
+    resolution: {integrity: sha512-h9R13hmlqexdMCn9ytG924UdX/v9hMyzxbOQE+FPAqpQvbQcVoWlyD/OVXy4T4LLzq+hRC/Zj7BWWCls7yabwA==}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -642,7 +642,7 @@ packages:
 
 snapshots:
 
-  '@0xshariq/voxa@2.2.5':
+  '@0xshariq/voxa@2.3.0':
     dependencies:
       redis: 5.10.0
       uuid: 13.0.0
