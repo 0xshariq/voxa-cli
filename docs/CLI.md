@@ -2,269 +2,121 @@
 
 > **Note:** This is a planned feature currently under development.
 
-## Vision
+## Command Structure
 
-The Voxa CLI will provide a command-line interface for testing and debugging HTTP APIs, similar to curl but with Voxa's advanced features like caching, retry logic, and request prioritization.
+### 1. Instance-Based Commands
 
-## Planned Features
+These commands use a Voxa instance for advanced features and persistent configuration.
 
-### Basic HTTP Commands
+- **Get:**
 
-```bash
-# GET request
-voxa get https://api.example.com/users
+  ```sh
+  voxa get <url> <payload|null> <headers>
+  ```
 
-# POST request with data
-voxa post https://api.example.com/users -d '{"name":"John"}'
+  - `payload` should be `null` for GET, HEAD, OPTIONS, and DELETE requests.
+  - Example:
+    ```sh
+    voxa get https://api.example.com/users null '{"Authorization": "Bearer token"}'
+    ```
 
-# Custom headers
-voxa get https://api.example.com/users -H "Authorization: Bearer token"
+- **Put:**
+  ```sh
+  voxa put <url> <payload> <headers>
+  ```
+- **Post:**
+  ```sh
+  voxa post <url> <payload> <headers>
+  ```
+- **Patch:**
+  ```sh
+  voxa patch <url> <payload> <headers>
+  ```
+- **Delete:**
+  ```sh
+  voxa delete <url> null <headers>
+  ```
+- **Options:**
+  ```sh
+  voxa options <url> null <headers>
+  ```
+- **Head:**
+  ```sh
+  voxa head <url> null <headers>
+  ```
 
-# Request with priority
-voxa post https://api.example.com/checkout --priority critical
+### 2. Static Request Command
+
+This command uses Voxa static methods for stateless, one-off requests.
+
+- **Request:**
+  ```sh
+  voxa request <method> <url> <payload> <headers>
+  ```
+  - `method` can be GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+  - Example:
+    ```sh
+    voxa request POST https://api.example.com/users '{"name": "John"}' '{"Authorization": "Bearer token"}'
+    voxa request GET https://api.example.com/users null '{"Authorization": "Bearer token"}'
+    ```
+
+## Dual-Mode CLI: Developer & Cloud
+
+### Project Structure
+
+- `index.ts`: Entry point for the CLI. Parses command-line arguments, initializes configuration, and dispatches commands.
+- `commands/`: Contains individual command modules (e.g., `get.ts`, `post.ts`, `request.ts`). Each module implements the logic for its respective command.
+- `docs/`: Documentation for CLI usage and features.
+- `config/`: (Optional) Stores global or environment-specific configuration files.
+
+### How Dual-Mode Works
+
+1. **Initialization**
+
+   - The CLI is started via `index.ts`, which reads arguments, environment variables, and flags (e.g., `--api <url>`).
+   - Configuration (e.g., baseURL, cache, headers) is loaded and validated.
+
+2. **Mode Selection**
+
+   - If the `--api <url>` flag or config is provided, the CLI routes commands to the remote Voxa API (cloud mode).
+   - If not, the CLI uses the local Voxa client library for direct execution (developer mode).
+
+3. **Command Dispatch**
+
+   - Based on the first argument (e.g., `get`, `post`, `request`), the CLI loads the corresponding module from `commands/`.
+   - Each command module exports a function that receives parsed arguments (URL, payload, headers, etc.).
+
+4. **Instance vs. Static Logic**
+
+   - Instance-based commands (`get`, `put`, `post`, `patch`, `delete`, `options`, `head`) use a persistent Voxa instance, allowing advanced features (caching, retry, queue, etc.).
+   - The `request` command uses Voxa static methods for stateless, one-off requests with optional config.
+
+5. **Execution & Output**
+
+   - In developer mode, commands use the local Voxa client for HTTP requests and print output directly.
+   - In cloud mode, commands send HTTP requests to the remote API, which executes the logic and returns results.
+   - Errors are caught and displayed in a consistent format.
+
+6. **Extensibility**
+   - New commands can be added by creating modules in `commands/` and updating `index.ts` to recognize them.
+   - Advanced features (batch, stats, etc.) can be implemented as additional commands.
+
+### Example Workflow
+
+```sh
+# Developer mode (local Voxa client)
+voxa get https://api.example.com/users null '{"Authorization": "Bearer token"}'
+
+# Cloud mode (remote Voxa API)
+voxa get https://api.example.com/users null '{"Authorization": "Bearer token"}' --api https://your-voxa-api
+
+# Stateless POST (cloud mode)
+voxa request POST https://api.example.com/users '{"name": "John"}' '{"Authorization": "Bearer token"}' --api https://your-voxa-api
 ```
 
-### Configuration
+---
 
-```bash
-# Use global environment variables (see CONFIGURATION.md)
-voxa get https://api.example.com/users
-
-# Use project .env file
-voxa get https://api.example.com/users --env .env.production
-
-# Override config
-voxa get https://api.example.com/users --cache-ttl 60000
-```
-
-### Collections & Environments
-
-```bash
-# Save request to collection
-voxa save get-users "voxa get https://api.example.com/users"
-
-# Run saved request
-voxa run get-users
-
-# List all saved requests
-voxa list
-
-# Import Postman collection
-voxa import postman-collection.json
-```
-
-### Interactive Mode
-
-```bash
-# Start interactive mode
-voxa
-
-# Interactive prompts guide you through:
-# - Method selection
-# - URL input
-# - Headers
-# - Body
-# - Advanced options
-```
-
-### Response Formatting
-
-```bash
-# JSON pretty print (default)
-voxa get https://api.example.com/users
-
-# Show only headers
-voxa get https://api.example.com/users --headers-only
-
-# Show only status
-voxa get https://api.example.com/users --status-only
-
-# Raw response
-voxa get https://api.example.com/users --raw
-
-# Save response to file
-voxa get https://api.example.com/users -o response.json
-```
-
-### Advanced Features
-
-```bash
-# Enable caching
-voxa get https://api.example.com/products --cache
-
-# With retry
-voxa get https://api.example.com/users --retry 5
-
-# Queue multiple requests
-voxa batch requests.json
-
-# Monitor request stats
-voxa stats
-```
-
-## Global Configuration
-
-### Setup (One-time)
-
-#### Linux/macOS
-
-Add to `~/.bashrc` or `~/.zshrc`:
-
-```bash
-# Voxa CLI Configuration
-export VOXA_REDIS_HOST="localhost"
-export VOXA_REDIS_PORT="6379"
-export VOXA_REDIS_PASSWORD="your-password"
-export VOXA_CACHE_ENABLED="true"
-export VOXA_CACHE_STORAGE="redis"
-```
-
-Apply:
-```bash
-source ~/.bashrc
-```
-
-#### Windows PowerShell
-
-Add to `$PROFILE`:
-
-```powershell
-$env:VOXA_REDIS_HOST = "localhost"
-$env:VOXA_REDIS_PORT = "6379"
-$env:VOXA_REDIS_PASSWORD = "your-password"
-$env:VOXA_CACHE_ENABLED = "true"
-```
-
-#### Windows Command Prompt
-
-```cmd
-setx VOXA_REDIS_HOST "localhost"
-setx VOXA_REDIS_PORT "6379"
-setx VOXA_REDIS_PASSWORD "your-password"
-```
-
-### Usage After Setup
-
-Once configured globally, all CLI commands automatically use these settings:
-
-```bash
-# No need to specify Redis config
-voxa get https://api.example.com/users --cache
-
-# Cache automatically uses global Redis settings
-```
-
-## Future Roadmap
-
-### Phase 1: Core CLI
-- [x] Project structure
-- [ ] Basic HTTP methods (GET, POST, PUT, DELETE)
-- [ ] Headers and body support
-- [ ] Response formatting
-- [ ] Global config from environment variables
-
-### Phase 2: Advanced Features
-- [ ] Request collections
-- [ ] Environment variables
-- [ ] Interactive mode
-- [ ] Response filters and transformers
-
-### Phase 3: Integration
-- [ ] Postman collection import/export
-- [ ] GraphQL support
-- [ ] WebSocket testing
-- [ ] API documentation generation
-
-### Phase 4: Full Application
-- [ ] Desktop application (Electron)
-- [ ] Web-based interface
-- [ ] Team collaboration features
-- [ ] Mock servers
-- [ ] API monitoring
-
-## Postman-like Application Feasibility
-
-Building a full-fledged Postman alternative on top of Voxa is **highly feasible** and would be a natural evolution:
-
-### Strengths of Voxa as a Foundation
-
-✅ **Solid HTTP Client Core**
-- All HTTP methods supported
-- TypeScript generics for type safety
-- Interceptors for request/response modification
-- Built-in retry logic and error handling
-
-✅ **Advanced Features Ready**
-- Caching (Memory/Redis)
-- Request deduplication
-- Priority-based queue management
-- Request metadata tracking
-
-✅ **Extensible Architecture**
-- Modular design (core/, config/, cli/)
-- Easy to add new features
-- Plugin system potential
-
-✅ **Developer Experience**
-- TypeScript throughout
-- Well-documented
-- Modern ESNext syntax
-
-### What You'd Need to Add
-
-#### For CLI Tool (Phase 1-2)
-- Command-line argument parsing (Commander.js, Yargs)
-- Response formatting (chalk, cli-table)
-- File I/O for collections
-- Config file management
-
-#### For Desktop App (Phase 3-4)
-- **Frontend Framework:** Electron + React/Vue/Svelte
-- **UI Components:** Request builder, response viewer, collection manager
-- **Data Persistence:** SQLite or IndexedDB for collections
-- **Syntax Highlighting:** Monaco Editor or CodeMirror
-- **Authentication Flow:** OAuth2, API Key management
-
-#### For Web App (Alternative to Desktop)
-- **Backend:** Node.js + Express/Fastify
-- **Frontend:** React/Vue with TailwindCSS
-- **Real-time:** WebSocket for live updates
-- **Cloud Sync:** PostgreSQL + Redis
-
-### Recommended Architecture
-
-```
-voxa-ecosystem/
-├── voxa/                   # Core HTTP client (current)
-├── voxa-cli/              # Command-line tool
-├── voxa-app/              # Desktop application (Electron)
-│   ├── main/              # Electron main process
-│   ├── renderer/          # React frontend
-│   └── shared/            # Shared utilities
-└── voxa-server/           # Optional cloud sync backend
-```
-
-### Development Timeline Estimate
-
-- **CLI Tool:** 2-4 weeks (basic), 2-3 months (full-featured)
-- **Desktop App:** 3-6 months (MVP), 8-12 months (Postman competitor)
-- **Web App:** 4-8 months (MVP), 12-18 months (production-ready)
-
-### My Recommendation
-
-**Start with the CLI tool first:**
-
-1. **Immediate Value:** Developers can use it right away
-2. **Foundation:** CLI logic can be reused in desktop/web apps
-3. **Feedback Loop:** Get user feedback before building UI
-4. **Incremental:** Build features step-by-step
-
-**Then build the desktop app:**
-
-1. **Rich UI:** Electron provides native feel
-2. **Offline First:** Works without internet (like Postman)
-3. **Reuse Voxa:** Your HTTP client is the engine
-4. **Market Gap:** Alternatives to Postman are in demand
+For implementation details, see `index.ts` and the `commands/` folder. 4. **Incremental:** Build features step-by-step
 
 ### Key Differentiators
 
