@@ -1,5 +1,5 @@
 {
-  "name": "@0xshariq/voxa-cli",
+  "name": "@voxa-http/voxa-cli",
   "version": "1.0.0",
   "description": "A modern HTTP client CLI built on native Fetch API with advanced features like caching, retry, and request deduplication.",
   "keywords": [
@@ -19,7 +19,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/0xshariq/voxa.git",
-    "directory": "packages/voxa"
+    "directory": "libraries/voxa-http-client/voxa-cli"
   },
   "license": "MIT",
   "author": "Sharique Chaudhary",
@@ -44,6 +44,6 @@
     "gradient-string": "^3.0.0",
     "inquirer": "^13.0.1",
     "inquirer-autocomplete-prompt": "^3.0.1",
-    "@0xshariq/voxa": "^2.3.0"
+    "@voxa-http/voxa": "^1.0.1"
   }
 }
